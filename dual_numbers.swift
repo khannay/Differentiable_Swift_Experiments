@@ -1,6 +1,7 @@
 
 
 import Foundation
+import _Differentiation 
 
 struct Dual {
     var val: Double 
@@ -113,3 +114,11 @@ func rhs_ode(_ R: Dual) {
 var b: Dual=h(Dual(1.0))
 
 print("Value: \(b.val) with deriv: \(b.der)")
+
+
+@differentiable
+func f(_ x: Float) -> Float {
+    x * x
+}
+let dfdx = derivative(of: f)
+dfdx(3) // 6
