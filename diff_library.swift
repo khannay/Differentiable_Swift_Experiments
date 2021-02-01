@@ -17,34 +17,39 @@ let dfdx = derivative(of: f)
 print(dfdx(3))
 
 
-struct Perceptron: @memberwise Differentiable {
-    var weight: SIMD2<Float> = .random(in: -1..<1)
-    var bias: Float = 0
+struct Perceptron: Differentiable {
+    var weights: [Float]
+    var bias: Float
 
     @differentiable
-    func callAsFunction(_ input: SIMD2<Float>) -> Float {
-        (weight * input).sum() + bias
+    func callAsFunction(_ input: [Float]) -> Float {
+        y=[Float]
+        for i in 0...input.count {
+            y.append(weights[i]*input[i]+bias)
+        }
+
     }
 }
 
-var model = Perceptron()
-let andGateData: [(x: SIMD2<Float>, y: Float)] = [
-    (x: [0, 0], y: 0),
-    (x: [0, 1], y: 0),
-    (x: [1, 0], y: 0),
-    (x: [1, 1], y: 1),
-]
-for _ in 0..<100 {
-    let (loss, 𝛁loss) = valueWithGradient(at: model) { model -> Float in
-        var loss: Float = 0
-        for (x, y) in andGateData {
-            let ŷ = model(x)
-            let error = y - ŷ
-            loss = loss + error * error / 2
+let iterationCount = 160
+let learningRate: Float = 0.00003
+
+var model = Perceptron(weights: .zero, bias: 0)
+
+for i in 0..<iterationCount {
+    var (loss, 𝛁loss) = valueWithGradient(at: model) { model -> Float in
+        var totalLoss: Float = 0
+        for (x, y) in data {
+            let pred = model(x)
+            let diff = y - pred
+            totalLoss = totalLoss + diff * diff / Float(data.count)
         }
-        return loss
+        return totalLoss
     }
-    print(loss)
-    model.weight -= 𝛁loss.weight * 0.02
-    model.bias -= 𝛁loss.bias * 0.02
+    𝛁loss.weight *= -learningRate
+    𝛁loss.bias *= -learningRate
+    model.move(along: 𝛁loss)
+    if i.isMultiple(of: 10) {
+        print("Iteration: \(iteration) Avg Loss: \(loss / Float(data.count))")
+    }
 }
