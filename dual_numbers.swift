@@ -1,7 +1,12 @@
 
 
 import Foundation
-import _Differentiation 
+//import _Differentiation 
+
+
+// Should make these SIMD values, ideally want to 
+// be able to use these anywhere that we have a numeric value 
+// the resulting value givces the derv of the system with respect to that input
 
 struct Dual {
     var val: Double 
@@ -101,24 +106,21 @@ func sin(_ f: Dual) -> Dual {
     return Dual(sin(f.val), cos(f.val) * f.der) 
 }
 
+func tanh(_ f: Dual) -> Dual {
+  return Dual(tanh(f.val), pow(1.0/cosh(f.val),2.0)*f.der)
+}
+
 
 func h(_ x: Dual)-> Dual {
-    return pow(x,2.0)+2.0*exp(x)*sin(10.0*x+pow(x,10.0))
+    return pow(x,2.0)+2.0*exp(2*x)+tanh(x)
+}
+
+func hderv_analytical(_ x: Dual) -> Dual {
+  return 2.0*x+4.0*exp(2*x)+1.0/cosh(x.val)
 }
 
 
-func rhs_ode(_ R: Dual) {
-    
-}
+var b: Dual=h(Dual(0.0))
 
-var b: Dual=h(Dual(1.0))
+print("Value: \(b.val) with deriv: \(b.der), actual value is \(hderv_analytical(Dual(0.0)).val)")
 
-print("Value: \(b.val) with deriv: \(b.der)")
-
-
-@differentiable
-func f(_ x: Float) -> Float {
-    x * x
-}
-let dfdx = derivative(of: f)
-dfdx(3) // 6
